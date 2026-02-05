@@ -1,6 +1,16 @@
 # MasterGo Skills
 
-Claude/Cursor Skill for parsing MasterGo design files and retrieving DSL data.
+[中文文档](README.zh-CN.md)
+
+A Cursor/Claude AI Agent Skill for parsing MasterGo design files and retrieving DSL data. Enables AI assistants to understand design structures, extract component information, and generate code from MasterGo designs.
+
+## Features
+
+- **DSL Analysis**: Analyze MasterGo design structure with human-readable output
+- **Full DSL Retrieval**: Get complete DSL data in JSON format
+- **Component Docs**: Fetch component documentation from linked URLs
+- **Multi-Page Support**: Handle complex designs with multiple pages and navigation
+- **Token Support**: Extract design tokens for CSS variable generation
 
 ## Installation
 
@@ -18,11 +28,11 @@ git clone https://github.com/jeasonstudio/mastergo-skills .cursor/skills/masterg
 
 ## Configuration
 
-### 1. Get Token
+### 1. Get Your Token
 
-1. Go to https://mastergo.com
+1. Go to [mastergo.com](https://mastergo.com)
 2. Navigate to **Personal Settings** → **Security Settings**
-3. Generate **Personal Access Token**
+3. Generate a **Personal Access Token**
 
 ### 2. Set Environment Variable
 
@@ -41,46 +51,65 @@ export MASTERGO_API_URL="https://your-mastergo-domain.com"
 
 ## Quick Start
 
-### Get DSL from Design Link
+### Analyze Design Structure
 
 ```bash
-# Short link
-node scripts/get-dsl.cjs "https://mastergo.com/goto/LhGgBAK"
-
-# Full URL
-node scripts/get-dsl.cjs "https://mastergo.com/file/155675508499265?layer_id=158:0002"
+python scripts/mastergo_analyze.py "https://mastergo.com/goto/LhGgBAK"
 ```
 
-### Get Component Documentation
+This provides a human-readable summary of the design:
+- Node tree with types, names, and sizes
+- Text contents
+- Component documentation links
+- Navigation targets
+
+### Get Full DSL Data
 
 ```bash
-node scripts/get-component-link.cjs "https://example.com/ant/button.mdx"
+python scripts/mastergo_get_dsl.py "https://mastergo.com/goto/LhGgBAK"
 ```
 
-### Get Site Metadata
+Returns JSON with `{ dsl, componentDocumentLinks, rules }`.
+
+### Fetch Component Documentation
 
 ```bash
-node scripts/get-meta.cjs --fileId=155675508499265 --layerId=158:0001
+# From DSL output
+python scripts/mastergo_get_dsl.py URL | python scripts/mastergo_fetch_docs.py --from-dsl
+
+# Individual URL
+python scripts/mastergo_fetch_docs.py "https://example.com/button.mdx"
 ```
 
-## Usage with Claude/Cursor
+## Usage with AI Agents
 
-Simply provide a MasterGo link to the agent:
+Simply provide a MasterGo link to your AI assistant:
 
 ```
 Parse this design: https://mastergo.com/goto/LhGgBAK
 ```
 
-The agent will:
-1. Call `scripts/get-dsl.cjs` to get DSL
-2. Process `componentDocumentLinks`
-3. Apply `rules` for code generation
+The agent will automatically:
+1. Analyze the design structure
+2. Retrieve DSL data
+3. Fetch component documentation
+4. Apply rules for code generation
+
+## Scripts Reference
+
+| Script | Purpose | Output |
+|--------|---------|--------|
+| `mastergo_analyze.py` | Structure summary | Human-readable tree to stdout |
+| `mastergo_get_dsl.py` | Full DSL data | JSON to stdout |
+| `mastergo_fetch_docs.py` | Component docs | Doc content to stdout |
+| `mastergo_utils.py` | Utility functions | Import as module |
 
 ## Documentation
 
-- [SKILL.md](SKILL.md) - Skill entry point
-- [scripts/README.md](scripts/README.md) - Script documentation
-- [references/](references/) - Detailed workflows
+- [SKILL.md](SKILL.md) - Agent skill entry point and instructions
+- [references/dsl-types.md](references/dsl-types.md) - Complete DSL type definitions
+- [references/dsl-structure.md](references/dsl-structure.md) - Key fields and patterns
+- [references/multi-page-workflow.md](references/multi-page-workflow.md) - Multi-page workflow guide
 
 ## Troubleshooting
 

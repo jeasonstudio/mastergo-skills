@@ -1,101 +1,138 @@
-# DSL Data Structure Reference
+# DSL Key Concepts & Patterns
 
-## Node Structure
+Practical guide for working with MasterGo DSL. For complete types, see [dsl-types.md](dsl-types.md).
 
-```typescript
-interface DslNode {
-  id: string;                    // Unique identifier (e.g., "1:12")
-  name: string;                  // Node name from design
-  type: string;                  // FRAME, TEXT, RECTANGLE, GROUP, etc.
-  children?: DslNode[];          // Child nodes
-  style?: StyleProperties;       // Style definitions
-  token?: string;                // Design token reference
-  componentInfo?: ComponentInfo; // Component binding
-  interactive?: Interactive[];   // Navigation/interaction
-}
+## Understanding Script Output
+
+### mastergo_analyze.py Output
+
+```
+DSL Analysis (v1.0.0, REACT)
+Stats: 45 nodes, 12 texts, 3 components, 2 navigations
+
+Component Docs:
+  - https://example.com/button.mdx
+  - https://example.com/input.mdx
+
+Structure:
+└── [FRAME] Page (1440x900)
+    ├── [FRAME] Header (1440x64)
+    │   ├── [TEXT] Logo "Company Name"
+    │   └── [FRAME] Nav
+    │       └── [TEXT] Menu "Home" → 0:2
+    └── [FRAME] Content (1440x836)
+        └── [TEXT] Title "Welcome"
+
+Text Contents:
+  [1:12] Logo: "Company Name"
+  [1:15] Menu: "Home"
+  [1:20] Title: "Welcome"
+
+Navigations:
+  Menu (1:15) → 0:2
 ```
 
-## Key Fields
-
-### style
-
-Contains visual properties:
+### mastergo_get_dsl.py Output
 
 ```json
 {
-  "backgroundColor": "#1890ff",
-  "borderRadius": 8,
-  "padding": [16, 24],
-  "fontSize": 14,
-  "fontWeight": 500
+  "dsl": { "nodes": [...], "root": {...} },
+  "componentDocumentLinks": ["https://..."],
+  "rules": ["token field must be generated as variable..."]
 }
 ```
 
-### token
+## Key Mapping Patterns
 
-Design token reference - should be converted to CSS variable:
+### Layout → CSS
 
-```json
-{
-  "style": { "backgroundColor": "#1890ff" },
-  "token": "brand-primary"
+| DSL | CSS |
+|-----|-----|
+| `autoLayout.direction: 'ROW'` | `flex-direction: row` |
+| `autoLayout.direction: 'COLUMN'` | `flex-direction: column` |
+| `autoLayout.layoutWrap: 'WRAP'` | `flex-wrap: wrap` |
+| `autoLayout.itemSpacing` | `gap` |
+| `autoLayout.mainAxisAlignItems: 'CENTER'` | `justify-content: center` |
+| `autoLayout.crossAxisAlignItems: 'CENTER'` | `align-items: center` |
+| `relatedLayout.type: 'ABSOLUTE'` | `position: absolute` |
+| `relatedLayout.flexGrow: 1` | `flex-grow: 1` |
+
+### Node Type → HTML Tag
+
+| DSL Type | Default Tag |
+|----------|-------------|
+| `FRAME` | `div` |
+| `TEXT` | `span` / `p` |
+| `RECTANGLE` | `div` |
+| `IMAGE` | `img` |
+| `INSTANCE` | Component from docs |
+
+### Token → CSS Variable
+
+```python
+# DSL
+node['style']['styleTokenAlias'] = {
+    'backgroundTokenId': 'token-123'
 }
-```
-
-### componentInfo
-
-Component binding information:
-
-```json
-{
-  "componentInfo": {
-    "componentSetDocumentLink": ["https://example.com/button.mdx"]
-  }
-}
-```
-
-### interactive
-
-Navigation/interaction definitions:
-
-```json
-{
-  "interactive": [{
-    "type": "navigation",
-    "targetLayerId": "0:3"
-  }]
-}
-```
-
-## Metadata Response (mcp__getMeta)
-
-XML structure:
-
-```xml
-<info>
-  <meta title="Name" content="Project Name" />
-  <meta title="Description" content="Project description" />
-  <meta title="Requirements" content="Tech stack requirements" />
-  <action title="Page Name" layerId="0:1" />
-  <action title="Another Page" layerId="0:2" />
-</info>
-```
-
-## Traversal Pattern
-
-```javascript
-function traverse(node, callback) {
-  callback(node);
-  node.children?.forEach(child => traverse(child, callback));
+# localStyleMap
+dsl['localStyleMap']['token-123'] = {
+    'name': 'brand-primary',
+    'variable': '--brand-primary',
+    'value': '#1890ff'
 }
 
-// Usage
-traverse(dsl, node => {
-  if (node.interactive) {
-    // Handle navigation
-  }
-  if (node.componentInfo?.componentSetDocumentLink) {
-    // Collect component links
-  }
-});
+# Generated CSS
+# background-color: var(--brand-primary); /* token: brand-primary */
+```
+
+## Common Extraction Patterns
+
+### Extract All Text
+
+```python
+def extract_texts(dsl):
+    texts = []
+    def traverse(node):
+        if not node:
+            return
+        if node.get('type') == 'TEXT' and node.get('characters'):
+            texts.append({
+                'id': node.get('id'),
+                'name': node.get('name'),
+                'text': node.get('characters'),
+            })
+        for child in node.get('children', []):
+            traverse(child)
+    
+    root = dsl.get('dsl', dsl)
+    for node in root.get('nodes', []):
+        traverse(node)
+    return texts
+```
+
+### Build Component Tree
+
+```python
+def build_tree(node, depth=0):
+    if not node:
+        return None
+    
+    return {
+        'type': node.get('type'),
+        'name': node.get('name'),
+        'tag': node.get('style', {}).get('tag', 'div'),
+        'text': node.get('characters'),
+        'children': [build_tree(c, depth+1) for c in node.get('children', [])]
+    }
+```
+
+### Get Style Properties
+
+```python
+def get_styles(node):
+    style = node.get('style', {})
+    return {
+        **style.get('value', {}),        # UI styles
+        **style.get('layoutStyles', {}), # Layout styles
+    }
 ```
