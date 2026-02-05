@@ -14,16 +14,8 @@ A Cursor/Claude AI Agent Skill for parsing MasterGo design files and retrieving 
 
 ## Installation
 
-### User-Level (available in all projects)
-
 ```bash
-git clone https://github.com/jeasonstudio/mastergo-skills ~/.cursor/skills/mastergo
-```
-
-### Project-Level (current project only)
-
-```bash
-git clone https://github.com/jeasonstudio/mastergo-skills .cursor/skills/mastergo
+npx skills add https://github.com/jeasonstudio/mastergo-skills
 ```
 
 ## Configuration

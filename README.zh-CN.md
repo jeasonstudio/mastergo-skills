@@ -14,16 +14,8 @@
 
 ## 安装
 
-### 用户级别（所有项目可用）
-
 ```bash
-git clone https://github.com/jeasonstudio/mastergo-skills ~/.cursor/skills/mastergo
-```
-
-### 项目级别（仅当前项目可用）
-
-```bash
-git clone https://github.com/jeasonstudio/mastergo-skills .cursor/skills/mastergo
+npx skills add https://github.com/jeasonstudio/mastergo-skills
 ```
 
 ## 配置
