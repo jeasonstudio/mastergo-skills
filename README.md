@@ -1,71 +1,115 @@
 # MasterGo Skills
 
-A Claude/Cursor Agent Skill for parsing MasterGo design files and retrieving DSL data.
-
-## Features
-
-- **DSL Retrieval**: Extract design data from MasterGo files
-- **URL Parsing**: Handle short links and full URLs
-- **Navigation Discovery**: Extract page relationships from interactive fields
-- **Component Link Extraction**: Collect component documentation references
-
-## Prerequisites
-
-Configure MasterGo MCP service:
-
-```json
-{
-  "mcpServers": {
-    "mastergo": {
-      "command": "npx",
-      "args": ["-y", "@mastergo/magic-mcp", "--token=YOUR_TOKEN", "--url=https://mastergo.com"]
-    }
-  }
-}
-```
-
-### Getting Your Token
-
-1. Visit https://mastergo.com → Personal Settings → Security Settings
-2. Generate Personal Access Token
-
-### Requirements
-
-- **Account**: Team Edition or higher
-- **Files**: Must be in Team Projects (not Drafts)
+Claude/Cursor Skill for parsing MasterGo design files and retrieving DSL data.
 
 ## Installation
 
-**User-Level**: `~/.cursor/skills/mastergo/`
+### User-Level (available in all projects)
 
-**Project-Level**: `.cursor/skills/mastergo/`
+```bash
+git clone https://github.com/jeasonstudio/mastergo-skills ~/.cursor/skills/mastergo
+```
 
-## Usage
+### Project-Level (current project only)
 
-The skill activates when you provide a MasterGo design link:
+```bash
+git clone https://github.com/jeasonstudio/mastergo-skills .cursor/skills/mastergo
+```
+
+## Configuration
+
+### 1. Get Token
+
+1. Go to https://mastergo.com
+2. Navigate to **Personal Settings** → **Security Settings**
+3. Generate **Personal Access Token**
+
+### 2. Set Environment Variable
+
+```bash
+# Required
+export MASTERGO_TOKEN="mg_your_token_here"
+
+# Optional (for enterprise deployments)
+export MASTERGO_API_URL="https://your-mastergo-domain.com"
+```
+
+### 3. Requirements
+
+- **Account**: Team Edition or higher
+- **Files**: Must be in Team Projects (not in Drafts)
+
+## Quick Start
+
+### Get DSL from Design Link
+
+```bash
+# Short link
+node scripts/get-dsl.cjs "https://mastergo.com/goto/LhGgBAK"
+
+# Full URL
+node scripts/get-dsl.cjs "https://mastergo.com/file/155675508499265?layer_id=158:0002"
+```
+
+### Get Component Documentation
+
+```bash
+node scripts/get-component-link.cjs "https://example.com/ant/button.mdx"
+```
+
+### Get Site Metadata
+
+```bash
+node scripts/get-meta.cjs --fileId=155675508499265 --layerId=158:0001
+```
+
+## Usage with Claude/Cursor
+
+Simply provide a MasterGo link to the agent:
 
 ```
 Parse this design: https://mastergo.com/goto/LhGgBAK
 ```
 
-## Structure
+The agent will:
+1. Call `scripts/get-dsl.cjs` to get DSL
+2. Process `componentDocumentLinks`
+3. Apply `rules` for code generation
+
+## Documentation
+
+- [SKILL.md](SKILL.md) - Skill entry point
+- [scripts/README.md](scripts/README.md) - Script documentation
+- [references/](references/) - Detailed workflows
+
+## Troubleshooting
+
+### Token Invalid
 
 ```
-mastergo-skills/
-├── SKILL.md                    # Main skill file
-├── references/
-│   ├── get-dsl-workflow.md    # DSL retrieval workflow
-│   └── dsl-structure.md       # DSL data structure
-└── scripts/
-    ├── parse-mastergo-url.js  # URL parsing utilities
-    └── extract-component-links.js  # DSL extraction utilities
+Error: TOKEN_INVALID
 ```
 
-## Related
+**Solution**: Regenerate token in MasterGo Personal Settings → Security Settings
 
-- [MasterGo Magic MCP](https://github.com/mastergo-design/mastergo-magic-mcp)
-- [MasterGo](https://mastergo.com)
+### Permission Denied
+
+```
+Error: PERMISSION_DENIED
+```
+
+**Solution**:
+1. Ensure account is Team Edition or higher
+2. Move file to Team Project (not Drafts)
+
+### Short Link Failed
+
+```
+Error: SHORT_LINK_FAILED
+```
+
+**Solution**: Use full URL format `https://mastergo.com/file/{fileId}?layer_id={layerId}`
 
 ## License
 
-ISC
+MIT
